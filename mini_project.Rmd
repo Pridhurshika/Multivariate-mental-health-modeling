@@ -1,0 +1,612 @@
+---
+title: "Mini_Project"
+author: "S19484"
+date: "2025-04-18"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This dataset provides a rich collection of anonymized mental health data for 1000 individuals, representing a wide range of ages, genders, occupations, and countries. It aims to shed light on the various factors affecting mental health, offering valuable insights into stress levels, sleep patterns, work-life balance, and physical activity.
+
+Key Features:
+Demographics: The dataset includes individuals from various countries such as the USA, India, the UK, Canada, and Australia. Each entry captures key demographic information such as age, gender, and occupation (e.g., IT, Healthcare, Education, Engineering).
+
+Mental Health Conditions: The dataset contains data on whether the individuals have reported any mental health issues (Yes/No), along with the severity of these conditions categorized into Low, Medium, or High.
+
+Consultation History: For individuals with mental health conditions, the dataset notes whether they have consulted a mental health professional.
+
+Stress Levels: Each individual’s stress level is classified as Low, Medium, or High, providing insights into how different factors such as work hours or sleep may correlate with mental well-being.
+
+Lifestyle Factors: The dataset includes information on sleep duration, work hours per week, and weekly physical activity hours, offering a detailed picture of how lifestyle factors contribute to mental health.
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+library(readr)
+mental_health_dataset <- read_csv("C:/Users/Admin/Downloads/mental_health_dataset.csv")
+head(mental_health_dataset)
+```
+
+# Variables
+
+1.User_ID	:1000	Unique identifier for each participant.
+
+2.Age	:Age of the participant (in years).
+```{r}
+library(ggplot2)
+ggplot(mental_health_dataset, aes(x = Age)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Age", x = "Age", y = "Count")
+```
+
+
+3.Gender	:Biological sex or self-identified gender.
+```{r}
+library(dplyr)
+library(ggplot2)
+
+gender_data <- mental_health_dataset %>%
+  group_by(Gender) %>%
+  summarise(count = n()) %>%
+  mutate(perc = round(100 * count / sum(count), 1),
+         label = paste0(Gender, " (", perc, "%)"))
+
+ggplot(gender_data, aes(x = "", y = count, fill = Gender)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y", start = 0) +
+  scale_fill_manual(values = c("lightblue", "pink", "lightgreen","lightyellow")) +  # Adjust colours as needed
+  theme_void() +
+  labs(title = "Pie Chart of Gender") 
+  
+
+
+
+```
+
+
+4.Occupation :Type of job or profession 
+```{r}
+occ_data <- mental_health_dataset %>%
+  group_by(Occupation) %>%
+  summarise(count = n()) %>%
+  mutate(perc = round(100 * count / sum(count), 1),
+         label = paste0(Occupation, " (", perc, "%)"))
+
+ggplot(occ_data, aes(x = "", y = count, fill = Occupation)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y", start = 0) +
+  scale_fill_manual(values = c(  "#FFB3BA",  
+  "#FFDFBA",  
+  "#FFFFBA",  
+  "#BAFFC9",
+  "#BAE1FF",
+  "#E3BAFF",  
+  "#D3D3D3" )) +
+  theme_void() +
+  labs(title = "Pie Chart of Occupation") 
+  
+```
+
+
+5.Country	:Participant’s country of residence.
+
+6.Mental_Health_Condition	:Indicates whether the person has a diagnosed or self-acknowledged mental health condition.
+
+7.Severity	Categorical	:Reflects how serious the mental health condition is 
+
+8.Consultation_History	:Whether the person has ever consulted a mental health professional (e.g., therapist, psychiatrist).
+
+9.Stress_Level	:the perceived stress levels of individuals
+
+10.Sleep_Hours	:Average hours of sleep per day
+```{r}
+library(ggplot2)
+ggplot(mental_health_dataset, aes(x = Sleep_Hours)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Sleep hours", x = "Sleep hrs", y = "Count")
+```
+
+
+11.Work_Hours	:Number of hours spent working per day, whether professional or academic.
+```{r}
+ggplot(mental_health_dataset, aes(x = Work_Hours)) +
+  geom_histogram(binwidth = 5, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of work hours", x = "work hrs", y = "Count")
+```
+
+
+12.Physical_Activity_Hours	:Number of hours spent exercising or being physically active per day.
+```{r}
+ggplot(mental_health_dataset, aes(x = Physical_Activity_Hours)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Physical_activity hours", x = "Physical_activity hrs", y = "Count")
+```
+
+
+```{r}
+str(mental_health_dataset)
+```
+```{r}
+summary(mental_health_dataset)
+```
+
+
+
+## Data Preprocessing
+
+# Handling missing values
+```{r}
+library(dplyr)
+colSums(is.na(mental_health_dataset))
+```
+# Convert to favtor variable
+```{r}
+
+mental_health_dataset$Gender <- as.factor(mental_health_dataset$Gender)
+mental_health_dataset$Occupation <- as.factor(mental_health_dataset$Occupation)
+mental_health_dataset$Country <- as.factor(mental_health_dataset$Country)
+mental_health_dataset$Mental_Health_Condition <- as.factor(mental_health_dataset$Mental_Health_Condition)
+mental_health_dataset$Consultation_History <- as.factor(mental_health_dataset$Consultation_History)
+mental_health_dataset$Severity <- as.factor(mental_health_dataset$Severity)
+
+
+str(mental_health_dataset)
+```
+```{r}
+mental_health_dataset<-mental_health_dataset%>%
+  dplyr::select(-User_ID)
+head(mental_health_dataset)
+```
+
+
+# Checking for outliers
+```{r}
+num_vars <- mental_health_dataset %>%
+  dplyr::select(Age,Sleep_Hours, Work_Hours, Physical_Activity_Hours)
+
+```
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+boxplot(num_vars, main = "Boxplot of Numeric Variables", col = "lightblue")
+
+```
+
+
+
+# Correlation
+```{r}
+pairs(num_vars, main = "Pairwise Scatterplots", pch = 19, col = "blue")
+
+```
+
+## Canonical correlation analysis
+variables from a mental_health_data were grouped into three conceptual domains based on their nature and relevance:
+
+1.demographic_info : country, age, gender, and occupation
+2.Mental_health : Mental_Health_Condition, Severity and Consultation_History
+3.Lifestyle : Stress_level, Sleep_Hours, Work_Hours and Physical_Activity_Hours
+
+```{r}
+library(dplyr)
+
+# Convert categorical vars to numeric 
+data_cca <- mental_health_dataset %>%
+  mutate(
+    Gender_num = as.numeric(Gender),
+    Country_num = as.numeric(Country),
+    Occupation_num = as.numeric(Occupation),
+    Mental_Health_Condition_num = as.numeric(Mental_Health_Condition),
+    Severity_num = as.numeric(factor(Severity, levels = c( "None","Low","Medium", "High" ))),
+    Consultation_History_num = as.numeric(Consultation_History),
+    Stress_Level_num = as.numeric(factor(Stress_Level, levels = c( "Low","Medium", "High" )))
+  )
+head(data_cca)
+```
+
+```{r}
+Demographic_info<- data_cca %>%
+  dplyr::select(Country_num, Age, Gender_num, Occupation_num)
+
+Mental_health<- data_cca %>%
+  dplyr::select(Mental_Health_Condition_num, Severity_num, Consultation_History_num)
+
+Lifestyle<- data_cca %>%
+  dplyr::select(Stress_Level_num,Sleep_Hours,Work_Hours,Physical_Activity_Hours)
+
+head(Lifestyle)
+
+```
+
+
+
+
+
+# Standardizing the data
+```{r}
+Demographic_info_std <- scale(Demographic_info)
+Mental_health_std <- scale(Mental_health)
+Lifestyle_std<- scale(Lifestyle)
+```
+
+
+# Demographic infomation vs Mental Health
+Objectives :
+To examine the relationship between demographic information and mental health factors, and identify the key demographic predictors of mental health status.
+
+```{r}
+library(CCA)
+result1 <- cc(Demographic_info_std,Mental_health_std)
+result1$cor
+result1$xcoef
+result1$ycoef
+
+```
+
+
+
+```{r}
+library(CCP)
+p.asym(result1$cor, nrow(Demographic_info_std), ncol(Demographic_info_std), ncol(Mental_health_std), tstat = "Wilks")
+
+```
+
+# Lifestyle vs Mental Health
+
+Objectives:
+To explore the association between mental health factors and lifestyle behaviors, understanding how mental well-being is connected to sleep, stress, work, and physical activity.
+
+```{r}
+library(CCA)
+result2 <- cc(Lifestyle_std,Mental_health_std)
+result2$cor
+result2$xcoef
+result2$ycoef
+```
+
+
+
+
+```{r}
+library(CCP)
+p.asym(result1$cor, nrow(Lifestyle_std), ncol(Lifestyle_std), ncol(Mental_health_std), tstat = "Wilks")
+
+```
+
+## Factor Analysis
+Factor Analysis is a multivariate technique used to identify latent (hidden) variables, or factors, that explain the patterns of correlations among a set of observed variables. It helps reduce dimensionality while preserving the underlying structure.
+
+```{r}
+library(psych)   # for fa() function
+library(dplyr)
+
+```
+
+```{r}
+library(dplyr)
+fa_data<- mental_health_dataset%>%
+ 
+  dplyr::select(where(is.numeric))
+
+fa_data <- scale(fa_data)
+head(fa_data)
+
+```
+
+
+```{r}
+# KMO Test (Sampling Adequacy)
+KMO(fa_data)
+
+```
+Overall MSA (Measure of Sampling Adequacy) = 0.5. This is on the borderline of acceptability which suggests that none of the variables correlate strongly enough with others to support factor analysis.
+
+
+```{r}
+# Bartlett's Test of Sphericity
+cortest.bartlett(fa_data)
+```
+The p-value = 0.3584768 is greater than 0.05, which means the variables are not sufficiently correlated to justify factor analysis.
+
+KMO = 0.5
+Bartlett's p > 0.05 (weak correlations)
+strongly suggest that Factor Analysis is not appropriate for this subset of variables.
+
+
+## PCA
+Principal Component Analysis (PCA) is a dimensionality reduction technique that transforms a set of possibly correlated variables into a smaller set of uncorrelated variables called principal components. These components capture the maximum variance in the data.
+
+
+# Select relevant continuous variables
+```{r}
+pca_data<-data_cca%>%
+  dplyr::select(-Mental_Health_Condition_num)%>%
+  dplyr::select(where(is.numeric))
+head(pca_data)
+```
+
+
+# Standardizing the data
+```{r}
+pca_data <- scale(pca_data)
+head(pca_data)
+```
+# PCA Model
+```{r}
+pca_result <- prcomp(pca_data, center = TRUE, scale. = TRUE)
+
+summary(pca_result)
+
+```
+
+```{r}
+pca_result$rotation
+
+```
+# Scree plot
+```{r}
+library(factoextra)
+fviz_eig(pca_result)
+
+```
+
+# Biplot
+```{r}
+fviz_pca_biplot(pca_result, 
+                label = "var",         # shows variable vectors only
+                repel = TRUE,
+                col.var = "red", 
+                col.ind = "gray40")
+
+```
+
+
+
+
+
+
+
+## SEM
+
+
+Objective:
+To model and test complex relationships between demographic factors, mental health conditions, and lifestyle behaviors.
+Specially,
+How demographics variables (Age, Gender, Occupation,Country) influence lifestyle factors ( Sleep_Hours, Work_Hours,Physical_Activity_Hours)
+And how both demographics and lifestyle variables influence mental health outcomes (Mental_Health_Condition, Severity,Stress level)
+
+```{r}
+library(lavaan)
+```
+
+# Specify the SEM Model
+
+Demographic is exogeneous latent variable measured by 2 indicators Age and Occupation.
+
+Mental_Health endogeneous latent variable measured by 2 variable Mental_Health_Condition and Severity 
+
+Mental_Health is predicted by latent variable demographics and observed variables Sleep_Hours , Work_Hours , Physical_Activity_Hours and Stress_Level
+
+
+
+
+```{r}
+sem_model <- '
+  Demographic =~ Age + Occupation_num 
+
+  Mental_Health =~ Mental_Health_Condition_num + Severity_num 
+
+  Mental_Health ~ Demographic + Sleep_Hours + Work_Hours + Physical_Activity_Hours + Stress_Level
+'
+
+```
+`
+
+
+```{r}
+fit<-cfa(sem_model,data = data_cca)
+summary(fit,fit.measures= TRUE)
+```
+
+# SEM Plot
+
+```{r}
+
+library(semPlot)
+
+
+library(semPlot)
+
+semPaths(fit,
+         what = "std",                # Show standardized estimates
+         layout = "tree",            # Layout as a hierarchical tree
+         edge.label.cex = 0.8,       # Size of edge labels (path coefficients)
+         sizeMan = 6,                # Size of observed (manifest) variables
+         sizeLat = 8,                # Size of latent variables (if any)
+         residuals = TRUE,           # Show residual variances
+         intercepts = FALSE,         # Hide intercepts
+         edge.color = "black",       # Color of path arrows
+         color = list(lat = "lightblue", man = "lightgreen"),  # Node colors
+         mar = c(6, 6, 6, 6),        # Margins to avoid clipping
+         nCharNodes = 0,             # Show full variable names
+         style = "lisrel",           # Classic SEM look (can try "ram", "mx")
+         fade = FALSE,               # Do not fade non-significant paths
+         optimizeLatRes = TRUE       # Auto-arrange latent residuals
+)
+
+```
+
+
+## Discriminant Analysis
+
+Objective:
+To classify individuals into mental health condition categories (Yes or No) using predictors such as age, gender, occupation, stress level, sleep hours, work hours, and physical activity hours, and to understand which factors contribute most to this classification.
+
+
+```{r}
+library(MASS)     
+library(caret)     
+library(ggplot2)
+
+```
+
+```{r}
+names(data_cca)
+```
+
+# Prepare the Data
+```{r}
+predictors <- c("Age", "Gender_num","Occupation_num" ,"Severity_num" , "Stress_Level_num", 
+                "Sleep_Hours", "Work_Hours", "Physical_Activity_Hours")
+
+model_data <- data_cca %>%
+  dplyr::select(all_of(predictors)
+                , Mental_Health_Condition) %>%
+  dplyr::mutate(Mental_Health_Condition = as.factor(Mental_Health_Condition)) %>%
+  na.omit() 
+```
+
+# split the data
+```{r}
+set.seed(123)
+train_index <- createDataPartition(model_data$Mental_Health_Condition, p = 0.7, list = FALSE)
+train_data <- model_data[train_index, ]
+test_data <- model_data[-train_index, ]
+
+```
+
+# Compute Prior Probabilities
+```{r}
+prior_probs <- prop.table(table(train_data$Mental_Health_Condition))
+prior_probs
+
+```
+# Check Variance Equality (Bartlett’s Test)
+```{r}
+bartlett_results <- sapply(predictors, function(var) {
+  bartlett.test(train_data[[var]] ~ train_data$Mental_Health_Condition)$p.value
+})
+bartlett_results
+
+```
+All p-values are well above 0.05, so you can assume homogeneity of variances across groups for all predictors — a key assumption of Linear Discriminant Analysis (LDA) is met.
+
+# Fit LDA model
+```{r}
+lda_model <- lda(as.formula(paste("Mental_Health_Condition ~", paste(predictors, collapse = " + "))),
+                 data = train_data)
+lda_model
+
+```
+
+# Evaluate Model
+```{r}
+lda_pred <- predict(lda_model, newdata = test_data[, predictors])
+
+```
+
+
+# Misclassification rates
+```{r}
+table(Predicted = lda_pred$class, Actual = test_data$Mental_Health_Condition)
+mean(lda_pred$class == test_data$Mental_Health_Condition)  # Accuracy
+
+```
+True Negatives (TN): 54 (correctly predicted "No")
+
+False Negatives (FN): 63 (predicted "No", actually "Yes")
+
+False Positives (FP): 91 (predicted "Yes", actually "No")
+
+True Positives (TP): 91 (correctly predicted "Yes")
+
+An accuracy of 48.5% is lower whic is Worse Than Random Guess 
+
+# Decision Boundaries
+```{r}
+library(ggplot2)
+lda_pred_train <- predict(lda_model)
+plot_data <- data.frame(
+  LD1 = lda_pred_train$x[,1],
+  Class = train_data$Mental_Health_Condition
+)
+ggplot(plot_data, aes(x=LD1, fill=Class)) + 
+  geom_density(alpha=0.5) +
+  ggtitle("Class Separation in Discriminant Space")
+```
+
+# Try QDA (in case variance differs between classes):
+
+```{r}
+qda_model <- qda(Mental_Health_Condition~., data=train_data)
+qda_model
+```
+
+# Evaluate Model
+```{r}
+qda_pred <- predict(qda_model, newdata = test_data[, predictors])
+
+```
+
+
+# Misclassification rates
+```{r}
+table(Predicted = qda_pred$class, Actual = test_data$Mental_Health_Condition)
+mean(qda_pred$class == test_data$Mental_Health_Condition)  # Accuracy
+
+```
+
+
+```{r}
+library(klaR)
+rda_model <- rda(Mental_Health_Condition~., data=train_data, gamma=0.1, lambda=0.5)
+rda_model
+```
+
+```{r}
+library(caret)
+tuneGrid <- expand.grid(gamma = c(0.05, 0.1, 0.2), lambda = c(0.1, 0.5, 1))
+rda_model <- train(Mental_Health_Condition ~ ., data = train_data, method = "rda", tuneGrid = tuneGrid)
+summary(rda_model)
+
+```
+
+```{r}
+rda_model$error.rate
+
+```
+```{r}
+# Step 1: Make predictions on the test data
+predictions <- predict(rda_model, newdata = test_data)
+
+# Step 2: Compare predictions to actual labels in the test data
+misclassified <- sum(predictions != test_data$Mental_Health_Condition)
+
+# Step 3: Calculate error rate
+error_rate <- misclassified / length(test_data$Mental_Health_Condition)
+error_rate_percentage <- error_rate * 100
+
+# Display the error rate as a percentage
+error_rate_percentage
+
+
+```
+
